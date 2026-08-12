@@ -1,0 +1,108 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ---------- Virtual environments ----------
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# ---------- Testing / coverage ----------
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.cache
+nosetests.xml
+
+# ---------- Type checkers / linters ----------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# ---------- Packaging / installers ----------
+*.spec
+*.manifest
+
+# ---------- IDE / editors ----------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.spyderproject
+.spyproject
+
+# ---------- OS ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ---------- ผลลัพธ์ของโปรแกรม (ไฟล์ภาพที่ต่อแล้ว) ----------
+_stitched/
+output/
+out/
+stitched/
+*_stitched/
+
+# ---------- ไฟล์ภาพทดสอบ / ตัวอย่าง ----------
+test_images/
+sample_images/
+samples/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.bmp
+*.gif
+
+# ยกเว้นรูปที่ใช้ประกอบเอกสาร ให้ commit ได้
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.gif
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.gif
+
+# ---------- ไฟล์ชั่วคราว / log ----------
+*.log
+*.tmp
+*.bak
+tmp/
+temp/
