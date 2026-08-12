@@ -1,7 +1,10 @@
 # 🧩 ImageStitcher — แอพต่อภาพเว็บตูน
 
 โปรแกรมต่อภาพ (เว็บตูน / มันฮวา / มังงะ) แบบมี UI ครบครัน เขียนด้วย Python + Tkinter
-ไฟล์เดียวจบ ไม่ต้องติดตั้งอะไรเยอะ รันได้ทั้ง Windows / macOS / Linux
+พึ่งแค่ Pillow ตัวเดียว รันได้ทั้ง Windows / macOS / Linux
+
+ส่วนตรรกะแยกออกจาก UI สมบูรณ์ — เอาไป import ใช้ในสคริปต์อื่นได้ และรองรับ
+การเสียบขั้นตอนใหม่ (upscale, watermark ฯลฯ) โดยไม่ต้องแก้โค้ดเดิม
 
 ---
 
@@ -16,6 +19,7 @@
 - **ปรับขนาดให้เท่ากันทุกภาพ** ก่อนต่อ (แนวตั้ง = กว้างเท่ากัน, แนวนอน = สูงเท่ากัน)
 - **โหมดหลายโฟลเดอร์** — ต่อภาพหลายตอนรวดเดียว เพิ่มโฟลเดอร์ย่อยทั้งหมดได้ในคลิกเดียว
 - **ระบบ smart กัน human error** — ตรวจสอบก่อนเริ่มทำงานทุกครั้ง แล้วสรุปคำเตือนให้ยืนยัน
+- **ยกเลิกงานกลางคันได้** — ไม่ต้องรอจนจบหรือฆ่าโปรเซสทิ้ง
 
 ---
 
@@ -25,6 +29,12 @@
 
 ```bash
 pip install Pillow
+```
+
+หรือติดตั้งเป็นแพ็กเกจไปเลย (ได้คำสั่ง `imbine` มาใช้ด้วย):
+
+```bash
+pip install -e .
 ```
 
 > Tkinter มากับ Python อยู่แล้วบนส่วนใหญ่
@@ -39,7 +49,7 @@ pip install Pillow
 ## 🚀 วิธีใช้
 
 ```bash
-python imbine.py
+python -m imbine
 ```
 
 โปรแกรมมี 2 แท็บ:
@@ -98,33 +108,56 @@ python imbine.py
 
 ## 🗂️ โครงสร้างโค้ด
 
-โค้ดทั้งหมดอยู่ใน `imbine.py` แบ่งเป็น 2 ส่วนชัดเจน แก้/เทสต์แยกกันได้
+```
+imbine/
+├── config.py        StitchConfig — ค่าตั้งทั้งงานรวมไว้ที่เดียว
+├── images.py        ค้นหา + เรียงไฟล์ภาพ (natural sort)
+├── inspection.py    ระบบกัน human error (ตรวจก่อนทำงาน)
+├── naming.py        แปลง pattern เป็นชื่อไฟล์
+├── grouping.py      แบ่งภาพเป็นกลุ่ม (1 กลุ่ม = 1 ไฟล์ผลลัพธ์)
+├── compose.py       งานพิกเซล: เปิดไฟล์ / ปรับขนาด / วางลงผืนผ้าใบ
+├── output.py        บันทึกเป็น JPG / PNG / WebP
+├── pipeline.py      กลไกท่อประมวลผล + ยกเลิกงาน + รายงานความคืบหน้า
+├── steps/           ขั้นตอนมาตรฐาน (load, uniform, split, stitch, save)
+├── api.py           run_stitch() — หน้าบ้านที่ UI เรียก
+└── ui/tk_app.py     หน้าต่าง Tkinter (ส่วนเดียวที่รู้จัก UI)
+```
 
-### ส่วนตรรกะ (ไม่พึ่ง UI)
+**กติกาข้อเดียวที่สำคัญที่สุด:** ทุกอย่างนอก `ui/` ห้าม import tkinter
+`import imbine` จึงทำงานได้บนเครื่องที่ไม่มี tkinter หรือไม่มีจอ — มีเทสต์
+บังคับข้อนี้ไว้ (`test_import_imbine_ไม่ลาก_tkinter_เข้ามา`)
 
-| ฟังก์ชัน                  | หน้าที่                                        |
-|--------------------------|-----------------------------------------------|
-| `is_image_file()`        | เช็คนามสกุลว่าเป็นไฟล์ภาพไหม                    |
-| `natural_sort_key()`     | สร้างกุญแจเรียงชื่อไฟล์แบบธรรมชาติ               |
-| `list_images_sorted()`   | คืนรายชื่อไฟล์ภาพในโฟลเดอร์ เรียงแล้ว            |
-| `inspect_images()`       | ตรวจไฟล์เสีย + ขนาดผิดปกติ คืนรายงาน + คำเตือน   |
-| `check_output_path()`    | เตือนถ้าปลายทางซ้อนอยู่ในต้นทาง                  |
-| `find_existing_outputs()`| หาชื่อไฟล์ผลลัพธ์ที่จะไปทับของเดิม               |
-| `stitch_images()`        | ต่อภาพจริง คืน list ของ `PIL.Image`             |
-| `_split_into_groups()`   | แบ่งภาพเป็นกลุ่มตามจำนวนไฟล์ / ขนาดสูงสุด        |
-| `build_output_name()`    | แปลง pattern เป็นชื่อไฟล์                       |
-| `save_results()`         | บันทึกผลลัพธ์เป็น JPG / PNG / WebP               |
+---
 
-### ส่วน UI
+## 🔧 ท่อประมวลผล (pipeline)
 
-| คลาส              | หน้าที่                                   |
-|------------------|------------------------------------------|
-| `SettingsPanel`  | แผงตั้งค่า ใช้ร่วมกันทั้ง 2 แท็บ            |
-| `SingleFolderTab`| แท็บต่อภาพโฟลเดอร์เดียว                    |
-| `MultiFolderTab` | แท็บต่อภาพหลายโฟลเดอร์                     |
-| `App`            | หน้าต่างหลัก + Notebook                    |
+การต่อภาพถูกแยกเป็น "ขั้นตอน" ที่ต่อกันเป็นสาย:
 
-งานหนักรันใน background thread ทั้งหมด UI จึงไม่ค้างระหว่างประมวลผล
+```
+load → uniform → split → stitch → save
+```
+
+แต่ละขั้นเปิด/ปิด/แทรก/สลับได้ทีละตัว ระบบที่จะเพิ่มทีหลัง (upscale,
+denoise, watermark, auto-trim) เสียบเข้ามาโดยไม่ต้องแก้โค้ดเดิม:
+
+```python
+from imbine import Step, build_default_pipeline, run_stitch
+
+class WatermarkStep(Step):
+    name = "watermark"
+
+    def run(self, ctx):
+        for img in ctx.results:
+            ...  # วาดลายน้ำลงบนภาพที่ต่อเสร็จแล้ว
+
+pipe = build_default_pipeline()
+pipe.insert_before("save", WatermarkStep())
+
+run_stitch(paths, "output", pipeline=pipe)
+```
+
+ทุกขั้นต้องเคารพ 3 ข้อ: รายงานผ่าน `ctx.progress`, เช็ค `ctx.cancel`
+ในลูปที่กินเวลา และห้ามแตะ UI
 
 ---
 
@@ -133,18 +166,49 @@ python imbine.py
 ส่วนตรรกะไม่ผูกกับ Tkinter จึง import ไปใช้ในสคริปต์อื่นได้เลย
 
 ```python
-from imbine import list_images_sorted, stitch_images, save_results
-import os
+from imbine import image_paths_in, run_stitch, StitchConfig
 
-folder = "chapter_01"
-paths = [os.path.join(folder, f) for f in list_images_sorted(folder)]
-
-results = stitch_images(paths, orientation="vertical", parts_count=3)
-save_results(results, "output", "{folder}_{n2}", fmt="JPG",
-             quality=92, folder_name="chapter_01")
+ctx = run_stitch(
+    image_paths_in("chapter_01"),
+    output_folder="output",
+    config=StitchConfig(orientation="vertical", parts_count=3,
+                        name_pattern="{folder}_{n2}", fmt="JPG"),
+    folder_name="chapter_01",
+    progress_cb=lambda e: print(f"[{e.step}] {e.done}/{e.total}"),
+)
+print(ctx.saved_paths)
 ```
 
+**ยกเลิกกลางคัน** (สั่งจากอีกเธรดได้):
+
+```python
+from imbine import CancelToken, Cancelled
+
+token = CancelToken()      # อีกเธรดเรียก token.cancel() เมื่อไหร่ก็ได้
+try:
+    run_stitch(paths, "output", cancel=token)
+except Cancelled:
+    print("ผู้ใช้ยกเลิก")
+```
+
+**ปล่อย `output_folder` ว่าง = ไม่เขียนไฟล์** ได้ภาพในหน่วยความจำอย่างเดียว
+(ฐานของระบบ preview ที่จะทำต่อ)
+
+ฟังก์ชันหน้าตาเดิม `stitch_images()` / `save_results()` ยังใช้ได้เหมือนเดิม
+
 ---
+
+## ✅ เทสต์
+
+```bash
+pip install pytest
+python -m pytest
+```
+
+186 เทสต์ ครอบคลุมส่วนตรรกะทั้งหมด รันได้โดยไม่ต้องมี tkinter และไม่ต้องมีจอ
+
+---
+
 
 ## 📄 ชนิดไฟล์ที่รองรับ
 
