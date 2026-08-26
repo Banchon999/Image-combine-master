@@ -12,12 +12,12 @@ class TestExtFor:
         ("JPG", ".jpg"), ("jpg", ".jpg"),
         ("PNG", ".png"), ("png", ".png"),
         ("WEBP", ".webp"), ("webp", ".webp"),
+        ("TIFF", ".tiff"), ("tiff", ".tiff"),
     ])
     def test_นามสกุลตามชนิด(self, fmt, expected):
         assert ext_for(fmt) == expected
 
     def test_ชนิดที่ไม่รู้จักตกเป็น_jpg(self):
-        assert ext_for("TIFF") == ".jpg"
         assert ext_for("") == ".jpg"
 
 

@@ -9,7 +9,8 @@ _FORBIDDEN = re.compile(r'[<>:"/\\|?*]')
 
 _TOKEN = re.compile(r"\{(n3|n2|n|folder|total)\}")
 
-_EXT_BY_FORMAT = {"PNG": ".png", "WEBP": ".webp", "JPG": ".jpg"}
+_EXT_BY_FORMAT = {"PNG": ".png", "WEBP": ".webp", "JPG": ".jpg",
+                  "JPEG": ".jpg", "TIFF": ".tiff"}
 
 
 def ext_for(fmt):

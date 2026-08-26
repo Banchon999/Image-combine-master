@@ -3,7 +3,7 @@
 
 import os
 
-from ..compose import load_rgb
+from ..images import load_image
 from ..pipeline import Step
 
 
@@ -30,6 +30,6 @@ class LoadImagesStep(Step):
         images = []
         for i, path in enumerate(paths, start=1):
             ctx.cancel.check()
-            images.append(load_rgb(path))
+            images.extend(load_image(path, ctx.config.multi_frame))
             ctx.progress.report(i, total, os.path.basename(path))
         ctx.images = images
