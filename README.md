@@ -1,7 +1,7 @@
 # 🧩 ImageStitcher — แอพต่อภาพเว็บตูน
 
-โปรแกรมต่อภาพ (เว็บตูน / มันฮวา / มังงะ) แบบมี UI ครบครัน เขียนด้วย Python + Tkinter
-พึ่งแค่ Pillow ตัวเดียว รันได้ทั้ง Windows / macOS / Linux
+โปรแกรมต่อภาพ (เว็บตูน / มันฮวา / มังงะ) แบบมี UI ครบครัน เขียนด้วย Python + PySide6
+รันได้ทั้ง Windows / macOS / Linux (Tkinter UI เดิมยังเก็บไว้เป็น legacy frontend)
 
 ส่วนตรรกะแยกออกจาก UI สมบูรณ์ — เอาไป import ใช้ในสคริปต์อื่นได้ และรองรับ
 การเสียบขั้นตอนใหม่ (upscale, watermark ฯลฯ) โดยไม่ต้องแก้โค้ดเดิม
@@ -28,7 +28,7 @@
 ต้องมี **Python 3.8 ขึ้นไป**
 
 ```bash
-pip install Pillow
+pip install Pillow PySide6
 ```
 
 หรือติดตั้งเป็นแพ็กเกจไปเลย (ได้คำสั่ง `imbine` มาใช้ด้วย):
@@ -37,12 +37,7 @@ pip install Pillow
 pip install -e .
 ```
 
-> Tkinter มากับ Python อยู่แล้วบนส่วนใหญ่
-> ถ้าบน Linux แล้วขึ้น `ModuleNotFoundError: No module named 'tkinter'` ให้ติดตั้งเพิ่ม:
-> ```bash
-> sudo apt install python3-tk      # Debian / Ubuntu
-> sudo dnf install python3-tkinter # Fedora
-> ```
+> UI หลักใช้ PySide6 ส่วน UI เดิมเรียกได้จาก `imbine.ui.tk_app` ชั่วคราว
 
 ---
 
@@ -120,11 +115,11 @@ imbine/
 ├── pipeline.py      กลไกท่อประมวลผล + ยกเลิกงาน + รายงานความคืบหน้า
 ├── steps/           ขั้นตอนมาตรฐาน (load, uniform, split, stitch, save)
 ├── api.py           run_stitch() — หน้าบ้านที่ UI เรียก
-└── ui/tk_app.py     หน้าต่าง Tkinter (ส่วนเดียวที่รู้จัก UI)
+└── ui/               Qt frontend และ tk_app.py (legacy frontend)
 ```
 
-**กติกาข้อเดียวที่สำคัญที่สุด:** ทุกอย่างนอก `ui/` ห้าม import tkinter
-`import imbine` จึงทำงานได้บนเครื่องที่ไม่มี tkinter หรือไม่มีจอ — มีเทสต์
+**กติกาข้อเดียวที่สำคัญที่สุด:** ทุกอย่างนอก `ui/` ห้าม import Qt/Tkinter
+`import imbine` จึงทำงานได้บนเครื่องที่ไม่มี UI binding หรือไม่มีจอ — มีเทสต์
 บังคับข้อนี้ไว้ (`test_import_imbine_ไม่ลาก_tkinter_เข้ามา`)
 
 ---

@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 """จุดเริ่มโปรแกรม:  python -m imbine"""
 
-import sys
-
-
 def main():
+    """เปิด Qt frontend หลักของโปรแกรม"""
     try:
-        from .ui.tk_app import main as run_app
+        # Qt ต้องถูก import เฉพาะใน entry point/UI เท่านั้น เพื่อให้ imbine
+        # ยังคงใช้เป็นไลบรารีบนเครื่องแบบ headless ได้
+        from .ui.qt import run
     except ImportError as e:
-        # tkinter ไม่ได้มากับ Python ทุกชุด (บน Linux ต้องลงแยก) —
-        # บอกวิธีแก้ไปเลย ดีกว่าโยน traceback ดิบใส่หน้าผู้ใช้
-        sys.exit(
+        raise SystemExit(
             f"เปิดหน้าต่างโปรแกรมไม่ได้: {e}\n\n"
-            "ถ้าเป็นเพราะไม่มี tkinter ให้ติดตั้งก่อน:\n"
-            "  Debian/Ubuntu : sudo apt install python3-tk\n"
-            "  Fedora        : sudo dnf install python3-tkinter\n"
-            "  Windows/macOS : ติดตั้ง Python จาก python.org (มี tkinter มาให้)"
+            "ติดตั้ง Qt binding ด้วยคำสั่ง: pip install PySide6"
         )
-    run_app()
+    return run()
 
 
 if __name__ == "__main__":

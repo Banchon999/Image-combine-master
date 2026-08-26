@@ -2,7 +2,7 @@
 """
 ส่วนติดต่อผู้ใช้
 
-จงใจไม่ import อะไรที่ระดับโมดูลนี้ — การ import imbine.ui ต้องไม่ลาก
-tkinter เข้ามา เพื่อให้ `import imbine` ยังทำงานได้บนเครื่องที่ไม่มี tkinter
-(เช่นเครื่องรันเทสต์) ใครจะใช้ UI ให้ import imbine.ui.tk_app ตรง ๆ
+จงใจไม่ import UI binding ใดที่ระดับโมดูลนี้ — การ import imbine.ui ต้องไม่ลาก
+PySide6 หรือ tkinter เข้ามา ส่วน Tk เดิมยังอยู่ใน ``tk_app`` ในฐานะ legacy
+frontend ระหว่างย้ายความสามารถ single-folder และ multi-folder มายัง Qt
 """
