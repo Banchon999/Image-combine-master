@@ -13,6 +13,8 @@ dependencies = ["Pillow>=9.1"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
+auto = ["opencv-python-headless>=4.7", "numpy>=1.21"]
+qt = ["PySide6>=6.5"]
 
 [project.scripts]
 imbine = "imbine.__main__:main"
