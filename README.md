@@ -1,7 +1,7 @@
 # 🧩 ImageStitcher — แอพต่อภาพเว็บตูน
 
-โปรแกรมต่อภาพ (เว็บตูน / มันฮวา / มังงะ) แบบมี UI ครบครัน เขียนด้วย Python + Tkinter
-พึ่งแค่ Pillow ตัวเดียว รันได้ทั้ง Windows / macOS / Linux
+โปรแกรมต่อภาพ (เว็บตูน / มันฮวา / มังงะ) พร้อม interactive workspace เขียนด้วย
+Python + Qt (PySide6) รันได้ทั้ง Windows / macOS / Linux
 
 ส่วนตรรกะแยกออกจาก UI สมบูรณ์ — เอาไป import ใช้ในสคริปต์อื่นได้ และรองรับ
 การเสียบขั้นตอนใหม่ (upscale, watermark ฯลฯ) โดยไม่ต้องแก้โค้ดเดิม
@@ -27,22 +27,13 @@
 
 ต้องมี **Python 3.8 ขึ้นไป**
 
-```bash
-pip install Pillow
-```
-
-หรือติดตั้งเป็นแพ็กเกจไปเลย (ได้คำสั่ง `imbine` มาใช้ด้วย):
+ติดตั้งเป็นแพ็กเกจ (ได้คำสั่ง `imbine` มาใช้ด้วย):
 
 ```bash
 pip install -e .
 ```
 
-> Tkinter มากับ Python อยู่แล้วบนส่วนใหญ่
-> ถ้าบน Linux แล้วขึ้น `ModuleNotFoundError: No module named 'tkinter'` ให้ติดตั้งเพิ่ม:
-> ```bash
-> sudo apt install python3-tk      # Debian / Ubuntu
-> sudo dnf install python3-tkinter # Fedora
-> ```
+คำสั่งนี้ติดตั้ง Pillow และ PySide6 ซึ่งเป็น Qt binding ให้อัตโนมัติ
 
 ---
 
@@ -52,7 +43,9 @@ pip install -e .
 python -m imbine
 ```
 
-โปรแกรมมี 2 แท็บ:
+Qt workspace มี action bar สำหรับ Import, Export, Undo/Redo และ Zoom พร้อม
+properties sidebar สำหรับทิศทาง, blending mode, rotate, scale และ offset รวมถึง
+asset drawer แบบ thumbnail ที่ลากสลับลำดับหรือลบภาพได้
 
 ### แท็บ 1 — ต่อภาพ 1 โฟลเดอร์
 
