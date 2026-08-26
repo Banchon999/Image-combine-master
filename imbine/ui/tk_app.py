@@ -31,7 +31,7 @@ class SettingsPanel(ttk.LabelFrame):
         super().__init__(master, text=title, padding=8)
         self.orientation = tk.StringVar(value="vertical")
         self.name_pattern = tk.StringVar(value="{n3}")
-        self.fmt = tk.StringVar(value="JPG")
+        self.fmt = tk.StringVar(value=FORMATS[0] if FORMATS else "JPEG")
         self.quality = tk.IntVar(value=92)
         self.split_mode = tk.StringVar(value="parts")
         self.parts_count = tk.IntVar(value=1)

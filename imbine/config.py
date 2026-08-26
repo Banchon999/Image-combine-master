@@ -10,8 +10,11 @@
 
 from dataclasses import asdict, dataclass, field, fields
 
+from .formats import available_export_formats, canonical_format, encoder_available
+
 # ชนิดไฟล์ขาออกที่รองรับ
-FORMATS = ("JPG", "PNG", "WEBP")
+FORMATS = tuple("JPG" if name == "JPEG" else name for name in
+                available_export_formats(("JPEG", "PNG", "WEBP", "TIFF")))
 
 ORIENTATIONS = ("vertical", "horizontal")
 
@@ -47,14 +50,30 @@ class StitchConfig:
     bg_color: tuple = (255, 255, 255)
     """สีพื้นหลังของผืนผ้าใบ"""
 
+    alpha_background: tuple = (255, 255, 255)
+    """สีที่ใช้ flatten alpha เมื่อ encoder (เช่น JPEG) ไม่รองรับ"""
+
+    multi_frame: str = "first"
+    """นโยบายภาพเคลื่อนไหว: first / all / error"""
+
+    export_options: dict = field(default_factory=dict)
+    """ตัวเลือก Pillow เพิ่มเติม แยกตาม format ได้โดยไม่แก้ pipeline"""
+
     def __post_init__(self):
         if self.orientation not in ORIENTATIONS:
             raise ValueError(
                 f"orientation ต้องเป็น {ORIENTATIONS} ไม่ใช่ {self.orientation!r}")
 
-        self.fmt = str(self.fmt).upper()
+        requested_fmt = str(self.fmt).upper()
+        canonical = canonical_format(requested_fmt)
+        if not encoder_available(canonical):
+            raise ValueError(f"ไม่มี encoder {canonical} ใน Pillow ที่กำลังใช้งาน")
+        self.fmt = "JPG" if requested_fmt in ("JPG", "JPEG") else canonical
         if self.fmt not in FORMATS:
             raise ValueError(f"fmt ต้องเป็น {FORMATS} ไม่ใช่ {self.fmt!r}")
+
+        if self.multi_frame not in ("first", "all", "error"):
+            raise ValueError("multi_frame ต้องเป็น first, all หรือ error")
 
         # ค่าตัวเลขใช้วิธี "บีบให้อยู่ในช่วง" ไม่ใช่โยน error
         # เพราะมันมาจาก Spinbox ที่ผู้ใช้พิมพ์มั่วได้
@@ -64,6 +83,8 @@ class StitchConfig:
         self.uniform = bool(self.uniform)
         self.overwrite = bool(self.overwrite)
         self.bg_color = tuple(self.bg_color)
+        self.alpha_background = tuple(self.alpha_background)
+        self.export_options = dict(self.export_options or {})
 
     @property
     def vertical(self):
@@ -74,6 +95,7 @@ class StitchConfig:
         """แปลงเป็น dict สำหรับเซฟลงไฟล์ preset"""
         data = asdict(self)
         data["bg_color"] = list(self.bg_color)  # JSON ไม่มี tuple
+        data["alpha_background"] = list(self.alpha_background)
         return data
 
     @classmethod

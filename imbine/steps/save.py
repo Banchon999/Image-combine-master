@@ -36,7 +36,10 @@ class SaveStep(Step):
             path = os.path.join(ctx.output_folder, base + ext)
             if not cfg.overwrite:
                 path = unique_path(path)
-            saved.append(save_image(img, path, cfg.fmt, cfg.quality))
+            options = cfg.export_options.get(cfg.fmt, cfg.export_options)
+            saved.append(save_image(
+                img, path, cfg.fmt, cfg.quality, cfg.alpha_background, options,
+                ctx.warnings.append))
             ctx.progress.report(i, total, os.path.basename(path))
 
         ctx.saved_paths = saved

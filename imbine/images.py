@@ -4,13 +4,76 @@
 import os
 import re
 
+from PIL import Image, ImageOps
+
+from .formats import (canonical_format, decoder_available,
+                      extensions_for_decoders)
+
 # นามสกุลไฟล์ภาพที่รองรับเป็น "ขาเข้า"
-IMAGE_EXTS = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif")
+IMAGE_EXTS = extensions_for_decoders()
 
 
-def is_image_file(filename):
-    """เช็คว่าไฟล์เป็นรูปภาพหรือไม่ (ดูจากนามสกุล)"""
-    return str(filename).lower().endswith(IMAGE_EXTS)
+class ImageValidationError(ValueError):
+    """The file name or decoded image does not satisfy input requirements."""
+
+
+def inspect_image(path):
+    """Decode enough of *path* to validate it and report its real format."""
+    try:
+        with Image.open(path) as image:
+            actual = canonical_format(image.format)
+            if not decoder_available(actual):
+                raise ImageValidationError(f"ไม่มี decoder สำหรับ {actual}")
+            image.verify()
+    except ImageValidationError:
+        raise
+    except Exception as exc:
+        raise ImageValidationError(f"ไฟล์ไม่ใช่ภาพที่ Pillow อ่านได้: {path}") from exc
+    return actual
+
+
+def is_image_file(filename, validate=False):
+    """Check a supported suffix, optionally validating decoded content too."""
+    supported = str(filename).lower().endswith(IMAGE_EXTS)
+    if not supported or not validate:
+        return supported
+    try:
+        inspect_image(filename)
+        return True
+    except (ImageValidationError, OSError):
+        return False
+
+
+def load_image(path, multi_frame="first"):
+    """Load detached, oriented images without prematurely converting colour.
+
+    ``multi_frame`` may be ``first``, ``all`` or ``error``.  The return value is
+    always a list so callers cannot accidentally ignore extra frames.
+    """
+    if multi_frame not in ("first", "all", "error"):
+        raise ValueError("multi_frame ต้องเป็น first, all หรือ error")
+    actual = inspect_image(path)
+    with Image.open(path) as source:
+        frames = getattr(source, "n_frames", 1)
+        if frames > 1 and multi_frame == "error":
+            raise ImageValidationError(
+                f"{path} มี {frames} เฟรม แต่ policy กำหนดให้รับภาพเฟรมเดียว")
+        indexes = range(frames) if multi_frame == "all" else range(1)
+        loaded = []
+        for index in indexes:
+            source.seek(index)
+            frame = ImageOps.exif_transpose(source)
+            frame.load()
+            frame = frame.copy()
+            frame.info["source_format"] = actual
+            # exif_transpose has consumed orientation; retain all other EXIF.
+            exif = frame.getexif()
+            if 274 in exif:
+                del exif[274]
+            if exif:
+                frame.info["exif"] = exif.tobytes()
+            loaded.append(frame)
+        return loaded
 
 
 def natural_sort_key(filename):
@@ -47,7 +110,8 @@ def list_images_sorted(folder):
     """
     if not os.path.isdir(folder):
         return []
-    files = [f for f in os.listdir(folder) if is_image_file(f)]
+    files = [f for f in os.listdir(folder)
+             if is_image_file(os.path.join(folder, f), validate=True)]
     files.sort(key=natural_sort_key)
     return files
 

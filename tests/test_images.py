@@ -63,10 +63,15 @@ class TestNaturalSortKey:
 class TestListImagesSorted:
 
     def test_คืนเฉพาะไฟล์ภาพและเรียงถูก(self, tmp_path):
-        for name in ["10.jpg", "2.jpg", "1.jpg", "note.txt"]:
-            (tmp_path / name).write_bytes(b"x")
+        for name in ["10.jpg", "2.jpg", "1.jpg"]:
+            Image.new("RGB", (1, 1)).save(tmp_path / name)
+        (tmp_path / "note.txt").write_bytes(b"x")
         assert list_images_sorted(str(tmp_path)) == [
             "1.jpg", "2.jpg", "10.jpg"]
+
+    def test_ไม่นับไฟล์เสียแม้นามสกุลเป็นภาพ(self, tmp_path):
+        (tmp_path / "broken.jpg").write_bytes(b"not an image")
+        assert list_images_sorted(str(tmp_path)) == []
 
     def test_โฟลเดอร์ไม่มีอยู่คืนลิสต์ว่าง(self, tmp_path):
         assert list_images_sorted(str(tmp_path / "ไม่มีจริง")) == []

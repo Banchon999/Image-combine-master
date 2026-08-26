@@ -25,7 +25,10 @@ class TestValidation:
 
     def test_ชนิดไฟล์ผิดต้องโยน_error(self):
         with pytest.raises(ValueError, match="fmt"):
-            StitchConfig(fmt="TIFF")
+            StitchConfig(fmt="GIF")
+
+    def test_tiff_ใช้ได้เมื่อ_backend_มี_encoder(self):
+        assert StitchConfig(fmt="TIFF").fmt == "TIFF"
 
     def test_ชนิดไฟล์ตัวเล็กถูกปรับเป็นตัวใหญ่(self):
         assert StitchConfig(fmt="webp").fmt == "WEBP"

@@ -3,6 +3,8 @@
 
 from PIL import Image
 
+from .images import load_image
+
 # Pillow ย้าย constant การ resample ไปอยู่ใต้ Image.Resampling ตั้งแต่ 9.1
 # แต่ยังคง alias เดิมไว้ — เผื่อไว้ทั้งสองทางจะได้ไม่ผูกกับเวอร์ชัน
 try:
@@ -56,22 +58,38 @@ def stitch_group(images, vertical=True, bg_color=(255, 255, 255)):
     if not images:
         raise ValueError("ไม่มีรูปภาพให้ต่อ")
 
+    has_alpha = any("A" in im.getbands() or im.mode in ("P", "PA") and
+                    "transparency" in im.info for im in images)
+    grayscale = all(im.mode in ("1", "L", "I", "F") for im in images)
+    mode = "RGBA" if has_alpha else ("L" if grayscale else "RGB")
+    if mode == "RGBA":
+        fill = tuple(bg_color[:3]) + (0,)
+    elif mode == "L":
+        fill = bg_color if isinstance(bg_color, int) else bg_color[0]
+    else:
+        fill = tuple(bg_color[:3])
+
     if vertical:
         w = max(im.width for im in images)
         h = sum(im.height for im in images)
-        canvas = Image.new("RGB", (w, h), bg_color)
+        canvas = Image.new(mode, (w, h), fill)
         y = 0
         for im in images:
-            canvas.paste(im, ((w - im.width) // 2, y))
+            converted = im if im.mode == mode else im.convert(mode)
+            canvas.paste(converted, ((w - im.width) // 2, y))
             y += im.height
     else:
         w = sum(im.width for im in images)
         h = max(im.height for im in images)
-        canvas = Image.new("RGB", (w, h), bg_color)
+        canvas = Image.new(mode, (w, h), fill)
         x = 0
         for im in images:
-            canvas.paste(im, (x, (h - im.height) // 2))
+            converted = im if im.mode == mode else im.convert(mode)
+            canvas.paste(converted, (x, (h - im.height) // 2))
             x += im.width
+    for key in ("icc_profile", "exif", "dpi"):
+        if key in images[0].info:
+            canvas.info[key] = images[0].info[key]
     return canvas
 
 
@@ -83,5 +101,4 @@ def load_rgb(path):
     ถ้าปล่อย Image.open() ค้างไว้ ตัวจัดการไฟล์จะรั่วสะสม และบน Windows
     ไฟล์ต้นทางจะถูกล็อกจนลบ/ย้ายไม่ได้ระหว่างที่โปรแกรมยังเปิดอยู่
     """
-    with Image.open(path) as img:
-        return img.convert("RGB")
+    return load_image(path, "first")[0].convert("RGB")
