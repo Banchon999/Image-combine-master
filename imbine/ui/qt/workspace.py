@@ -1,7 +1,5 @@
 """Zoomable, viewport-rendered image workspace and overlay controls."""
 
-from pathlib import Path
-
 from PySide6.QtCore import QLineF, Signal
 from PySide6.QtGui import QColor, QImageReader, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QGraphicsView
