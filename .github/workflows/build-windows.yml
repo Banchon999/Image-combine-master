@@ -1,16 +1,26 @@
 name: Build Windows app
 
-# ทุก push/PR ได้ไฟล์ให้โหลดจากหน้า Actions ส่วนการ push tag ที่ขึ้นต้นด้วย v
-# จะสร้าง Release พร้อมแนบไฟล์ให้อัตโนมัติ
+# ได้ไฟล์ให้โหลดจากหน้า Actions ทุกครั้งที่มีการเปลี่ยนแปลง ส่วนการ push tag
+# ที่ขึ้นต้นด้วย v จะสร้าง Release พร้อมแนบไฟล์ให้อัตโนมัติ
+#
+# push จับเฉพาะ main กับ tag ไม่ใช่ทุก branch — ไม่งั้น branch ที่เปิด PR ไว้จะ
+# ถูก build สองรอบต่อหนึ่งคอมมิต (รอบหนึ่งจาก push อีกรอบจาก pull_request)
+# ซึ่งเปลืองเวลา runner เท่าตัวโดยได้ผลลัพธ์เหมือนกันเป๊ะ
 on:
   push:
-    branches: ["**"]
+    branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# คอมมิตใหม่บน branch เดิมทำให้รอบเก่าไม่มีความหมายแล้ว ยกเลิกทิ้งไปเลย
+# (ยกเว้นงานที่ยิงจาก tag ซึ่งต้องได้ Release ครบทุกอัน)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   test:
