@@ -15,10 +15,29 @@ class WorkspaceView(QGraphicsView):
         self.setRenderHint(QPainter.SmoothPixmapTransform)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setViewportUpdateMode(QGraphicsView.BoundingRectViewportUpdate)
-        self.setBackgroundBrush(QColor("#17191f"))
         self._items = []
         self._grid = True
         self._zoom = 1.0
+        self._grid_color = QColor(255, 255, 255, 22)
+        self.set_colors("#17191f")
+
+    def set_colors(self, canvas, grid=None):
+        """
+        ตั้งสีพื้นหลังและเส้นกริดจากธีม
+
+        เดิมสีสองค่านี้ฝังอยู่ในไฟล์นี้ ทำให้เปลี่ยนธีมแล้วแคนวาสยังมืดอยู่
+        ตัวเดียว — ตอนนี้ imbine.ui.qt.theme เป็นเจ้าของสีทั้งหมด
+        """
+        self.setBackgroundBrush(QColor(canvas))
+        if grid is not None:
+            self._grid_color = QColor(grid)
+        else:
+            # เส้นกริดต้องตัดกับพื้นหลัง: พื้นมืดใช้เส้นสว่าง พื้นสว่างใช้เส้นมืด
+            base = QColor(canvas)
+            light = base.lightness() > 127
+            self._grid_color = (QColor(0, 0, 0, 26) if light
+                                else QColor(255, 255, 255, 22))
+        self.viewport().update()
 
     def set_layers(self, layers, orientation="vertical"):
         self.scene().clear()
@@ -67,7 +86,7 @@ class WorkspaceView(QGraphicsView):
         if not self._grid:
             return
         step = 50
-        painter.setPen(QPen(QColor(255, 255, 255, 22), 0))
+        painter.setPen(QPen(self._grid_color, 0))
         left = int(rect.left()) - int(rect.left()) % step
         top = int(rect.top()) - int(rect.top()) % step
         for x in range(left, int(rect.right()) + step, step):

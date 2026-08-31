@@ -83,8 +83,11 @@ class StitchConfig:
 
     # ---- พรีวิว (DownscaleStep) ----
 
-    preview_max_dimension: int = 0
-    """ย่อภาพให้ด้านยาวสุดไม่เกินเท่านี้ก่อนต่อ / 0 = ไม่ย่อ (โหมดส่งออกจริง)"""
+    preview_max_pixels: int = 0
+    """งบพิกเซลรวมของภาพผลลัพธ์ในโหมดพรีวิว / 0 = ไม่ย่อ (โหมดส่งออกจริง)
+
+    เป็น "จำนวนพิกเซล" ไม่ใช่ "ด้านยาวสุด" เพราะภาพเว็บตูนสูงเป็นหมื่นพิกเซล
+    การจำกัดด้านยาวจะย่อจนความกว้างเหลือไม่กี่สิบพิกเซลและดูอะไรไม่ออกเลย"""
 
     def __post_init__(self):
         if self.orientation not in ORIENTATIONS:
@@ -119,7 +122,7 @@ class StitchConfig:
         self.trim_tolerance = max(0, min(255, int(self.trim_tolerance)))
         self.overlap_max_px = max(0, int(self.overlap_max_px))
         self.watermark = dict(self.watermark or {})
-        self.preview_max_dimension = max(0, int(self.preview_max_dimension))
+        self.preview_max_pixels = max(0, int(self.preview_max_pixels))
 
     @property
     def vertical(self):

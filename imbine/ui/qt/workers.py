@@ -1,4 +1,5 @@
-"""Background workers that keep long-running stitching away from Qt's UI thread."""
+# -*- coding: utf-8 -*-
+"""ตัวทำงานเบื้องหลัง — กันงานหนักไม่ให้ไปค้างอยู่บนเธรดของ UI"""
 
 from dataclasses import dataclass
 
@@ -6,6 +7,7 @@ from PySide6.QtCore import QObject, Signal, Slot
 
 from ...api import run_stitch
 from ...pipeline import CancelToken, Cancelled
+from ...steps import build_preview_pipeline
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,47 @@ class StitchWorker(QObject):
                 self.failed.emit(index, error)
             else:
                 self.jobFinished.emit(index, context)
+        self.finished.emit(cancelled)
+
+    def cancel(self):
+        self.cancel_token.cancel()
+
+
+class PreviewWorker(QObject):
+    """
+    ต่อภาพเพื่อดูผลอย่างเดียว ไม่เขียนไฟล์
+
+    แยกคลาสจาก StitchWorker เพราะสัญญาต่างกันชัดเจน: อันนี้คืน *ภาพ* กลับมา
+    ให้ UI วาด ไม่ใช่คืน path ของไฟล์ที่เขียนไปแล้ว การยัดสองอย่างนี้ไว้ใน
+    คลาสเดียวจะทำให้ผู้รับสัญญาณต้องเดาเองว่าได้อะไรมา
+    """
+
+    progress = Signal(object)
+    ready = Signal(object)
+    failed = Signal(object)
+    finished = Signal(bool)
+
+    def __init__(self, paths, config):
+        super().__init__()
+        self.paths = list(paths)
+        self.config = config
+        self.cancel_token = CancelToken()
+
+    @Slot()
+    def run(self):
+        cancelled = False
+        try:
+            context = run_stitch(
+                self.paths, "", self.config,
+                progress_cb=self.progress.emit,
+                cancel=self.cancel_token,
+                pipeline=build_preview_pipeline())
+        except Cancelled:
+            cancelled = True
+        except Exception as error:
+            self.failed.emit(error)
+        else:
+            self.ready.emit(context.results)
         self.finished.emit(cancelled)
 
     def cancel(self):
