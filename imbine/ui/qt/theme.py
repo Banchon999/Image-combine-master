@@ -8,6 +8,10 @@
 โทเคนอีกที เพิ่มธีมใหม่ = เพิ่ม dict หนึ่งตัว
 """
 
+import os
+
+from ...resources import asset_path
+
 DARK = {
     "bg": "#22252d",
     "surface": "#292d37",
@@ -49,6 +53,37 @@ DEFAULT_THEME = "dark"
 # Leelawadee UI มากับ Windows 8+ ส่วน Tahoma มีมาตั้งแต่ Windows รุ่นเก่ามาก
 FONT_STACK = ('"Noto Sans Thai", "Leelawadee UI", "Sarabun", Tahoma, '
               '"Segoe UI", "Helvetica Neue", sans-serif')
+
+
+def load_icon(name, color=None):
+    """
+    โหลดไอคอน SVG จาก assets/icons แล้วย้อมสีให้เข้ากับธีม
+
+    ไฟล์ SVG ใช้ ``stroke="currentColor"`` ซึ่ง QtSvg ไม่รู้จัก (ไม่มี CSS
+    cascade) จึงต้องแทนที่ด้วยสีจริงก่อนเรนเดอร์ ไม่งั้นได้ไอคอนสีดำบนพื้นมืด
+
+    ไฟล์หายก็คืน QIcon ว่าง — ปุ่มยังมีข้อความกำกับอยู่แล้ว
+    """
+    from PySide6.QtCore import QByteArray
+    from PySide6.QtGui import QIcon, QPixmap
+
+    path = asset_path("icons", f"{name}.svg")
+    if not os.path.isfile(path):
+        return QIcon()
+    color = color or tokens()["text"]
+    with open(path, encoding="utf-8") as handle:
+        markup = handle.read().replace("currentColor", color)
+    pixmap = QPixmap()
+    pixmap.loadFromData(QByteArray(markup.encode("utf-8")), "SVG")
+    return QIcon(pixmap)
+
+
+def app_icon():
+    """ไอคอนของหน้าต่างและของไฟล์ .exe"""
+    from PySide6.QtGui import QIcon
+
+    path = asset_path("icon.ico")
+    return QIcon(path) if os.path.isfile(path) else QIcon()
 
 
 def tokens(name=DEFAULT_THEME):

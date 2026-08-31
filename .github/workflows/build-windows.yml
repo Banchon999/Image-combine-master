@@ -1,0 +1,126 @@
+name: Build Windows app
+
+# ทุก push/PR ได้ไฟล์ให้โหลดจากหน้า Actions ส่วนการ push tag ที่ขึ้นต้นด้วย v
+# จะสร้าง Release พร้อมแนบไฟล์ให้อัตโนมัติ
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: เทสต์ส่วนตรรกะ
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # เทสต์ทั้งชุดไม่แตะ Qt เลย (กติกาของโปรเจกต์คือชั้นตรรกะห้าม import UI)
+      # จึงไม่ต้องลง PySide6 ร้อยกว่าเมกะไบต์แค่เพื่อรันเทสต์
+      - name: ติดตั้งเฉพาะที่เทสต์ต้องใช้
+        run: python -m pip install --upgrade pip Pillow pytest
+
+      - name: รันเทสต์
+        run: python -m pytest
+
+      - name: ตรวจว่า import imbine ไม่ลาก Qt เข้ามา
+        run: |
+          python -c "
+          import sys, imbine
+          leaked = [m for m in sys.modules if m.startswith(('PySide6', 'tkinter'))]
+          assert not leaked, f'ชั้นตรรกะลาก UI เข้ามาด้วย: {leaked}'
+          print('ok — imbine เป็น headless จริง')
+          "
+
+  build-windows:
+    name: แพ็กเป็นโปรแกรม Windows
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: ติดตั้งโปรแกรมและตัวแพ็ก
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller
+
+      - name: อ่านเลขเวอร์ชัน
+        id: version
+        shell: bash
+        run: |
+          version=$(python -c "import imbine; print(imbine.__version__)")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "เวอร์ชัน $version"
+
+      - name: แพ็กด้วย PyInstaller
+        run: pyinstaller --noconfirm imbine.spec
+
+      # ถ้า .exe หายหรือไฟล์ประกอบไม่ถูกใส่มา จะได้รู้ตรงนี้ ไม่ใช่ตอนผู้ใช้
+      # โหลดไปแล้วเปิดไม่ขึ้น
+      - name: ตรวจผลลัพธ์
+        shell: bash
+        run: |
+          test -f "dist/Imbine/Imbine.exe" || { echo "ไม่พบ Imbine.exe"; exit 1; }
+          for f in dist/Imbine/_internal/imbine/locales/th.json \
+                   dist/Imbine/_internal/imbine/locales/en.json \
+                   dist/Imbine/_internal/assets/fonts/Garuda.ttf \
+                   dist/Imbine/_internal/assets/icon.ico; do
+            test -f "$f" || { echo "ไฟล์ประกอบหาย: $f"; exit 1; }
+          done
+          echo "ขนาดรวม: $(du -sh dist/Imbine | cut -f1)"
+
+      - name: บีบเป็น zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/Imbine/* `
+            -DestinationPath "Imbine-${{ steps.version.outputs.version }}-windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Imbine-${{ steps.version.outputs.version }}-windows
+          path: Imbine-${{ steps.version.outputs.version }}-windows.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: สร้าง Release
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # ต้องมีสิทธิ์เขียนถึงจะสร้าง Release ได้
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Imbine-*-windows
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: "*.zip"
+          generate_release_notes: true
+          body: |
+            ## วิธีติดตั้ง
+
+            1. โหลดไฟล์ `.zip` ด้านล่าง
+            2. แตกไฟล์ออกมาทั้งโฟลเดอร์
+            3. เปิด `Imbine.exe`
+
+            ไม่ต้องติดตั้ง Python — โปรแกรมมีทุกอย่างมาให้ในตัวแล้ว
+
+            > Windows อาจขึ้นเตือน "Windows protected your PC" เพราะไฟล์ยังไม่ได้
+            > เซ็นใบรับรองดิจิทัล กด **More info → Run anyway** เพื่อเปิดใช้งาน

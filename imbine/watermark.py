@@ -38,11 +38,15 @@ _SYSTEM_FONTS = (
     r"C:\Windows\Fonts\tahoma.ttf",        # Tahoma — Windows ทุกรุ่น
     "/System/Library/Fonts/Supplemental/Ayuthaya.ttf",           # macOS
     "/usr/share/fonts/truetype/noto/NotoSansThai-Regular.ttf",   # Linux
+    "/usr/share/fonts/truetype/tlwg/Garuda.ttf",
     "/usr/share/fonts/truetype/tlwg/Loma.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",           # ไม่มีไทย แต่ดีกว่าไม่มีอะไร
 )
 
-BUNDLED_FONT = "NotoSansThai-Regular.ttf"
+# ฟอนต์ที่แถมไปกับโปรแกรม — Garuda (GPL-2+ with Font exception) ดู
+# assets/fonts/Garuda-COPYRIGHT.txt แถมมาเพื่อให้ลายน้ำภาษาไทยออกมาเหมือนกัน
+# ทุกเครื่อง ไม่ต้องหวังพึ่งฟอนต์ที่ระบบมีให้
+BUNDLED_FONT = "Garuda.ttf"
 
 
 def find_font_file(preferred=None):

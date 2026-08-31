@@ -25,7 +25,8 @@ from .inspection_dialog import InspectionDialog
 from .preview_panel import PREVIEW_MAX_PIXELS, PreviewPanel
 from .settings_panel import SettingsPanel
 from .summary_bar import SummaryBar
-from .theme import DEFAULT_THEME, THEMES, build_stylesheet, tokens
+from .theme import (DEFAULT_THEME, THEMES, app_icon, build_stylesheet,
+                    load_icon, tokens)
 from .workers import PreviewWorker, StitchJob, StitchWorker
 from .workspace import WorkspaceView
 
@@ -44,6 +45,7 @@ class MainWindow(QMainWindow):
 
         self.resize(1400, 900)
         self.setAcceptDrops(True)
+        self.setWindowIcon(app_icon())
 
         self._build_central()
         self._build_toolbar()
@@ -247,10 +249,22 @@ class MainWindow(QMainWindow):
         if app is not None:
             app.setStyleSheet(build_stylesheet(self.theme))
         self.canvas.set_colors(tokens(self.theme)["canvas"])
+        self._refresh_icons()
         action = self.theme_actions.get(self.theme)
         if action is not None:
             action.setChecked(True)
         self._store_settings()
+
+    def _refresh_icons(self):
+        """ย้อมไอคอนใหม่ตามสีตัวอักษรของธีม — ไอคอนสีเดิมจะจมหายไปบนพื้นตรงข้าม"""
+        color = tokens(self.theme)["text"]
+        for action, name in ((self.import_action, "import"),
+                             (self.folder_action, "folder"),
+                             (self.preview_action, "preview"),
+                             (self.export_action, "export"),
+                             (self.undo_action, "undo"),
+                             (self.redo_action, "redo")):
+            action.setIcon(load_icon(name, color))
 
     def change_language(self, code):
         set_locale(code)
@@ -653,6 +667,7 @@ def main():
     app.setStyle("Fusion")
     app.setApplicationName("Imbine")
     app.setApplicationVersion(__version__)
+    app.setWindowIcon(app_icon())
 
     # ตั้งภาษาตามที่ผู้ใช้เคยเลือกไว้ ก่อนสร้าง widget ใด ๆ เพราะข้อความ
     # ถูกอ่านตอน __init__ ของแต่ละตัว
