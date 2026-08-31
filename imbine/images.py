@@ -8,6 +8,7 @@ from PIL import Image, ImageOps
 
 from .formats import (canonical_format, decoder_available,
                       extensions_for_decoders)
+from .i18n import M
 
 # นามสกุลไฟล์ภาพที่รองรับเป็น "ขาเข้า"
 IMAGE_EXTS = extensions_for_decoders()
@@ -23,12 +24,13 @@ def inspect_image(path):
         with Image.open(path) as image:
             actual = canonical_format(image.format)
             if not decoder_available(actual):
-                raise ImageValidationError(f"ไม่มี decoder สำหรับ {actual}")
+                raise ImageValidationError(M("core.error.no_decoder", fmt=actual))
             image.verify()
     except ImageValidationError:
         raise
     except Exception as exc:
-        raise ImageValidationError(f"ไฟล์ไม่ใช่ภาพที่ Pillow อ่านได้: {path}") from exc
+        raise ImageValidationError(
+            M("core.error.not_an_image", path=path)) from exc
     return actual
 
 
@@ -51,13 +53,13 @@ def load_image(path, multi_frame="first"):
     always a list so callers cannot accidentally ignore extra frames.
     """
     if multi_frame not in ("first", "all", "error"):
-        raise ValueError("multi_frame ต้องเป็น first, all หรือ error")
+        raise ValueError(M("core.error.bad_multi_frame"))
     actual = inspect_image(path)
     with Image.open(path) as source:
         frames = getattr(source, "n_frames", 1)
         if frames > 1 and multi_frame == "error":
             raise ImageValidationError(
-                f"{path} มี {frames} เฟรม แต่ policy กำหนดให้รับภาพเฟรมเดียว")
+                M("core.error.multi_frame_rejected", path=path, frames=frames))
         indexes = range(frames) if multi_frame == "all" else range(1)
         loaded = []
         for index in indexes:

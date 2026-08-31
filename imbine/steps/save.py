@@ -18,6 +18,7 @@ class SaveStep(Step):
     """
 
     name = "save"
+    label_key = "step.save"
 
     def is_enabled(self, ctx):
         return bool(ctx.output_folder)

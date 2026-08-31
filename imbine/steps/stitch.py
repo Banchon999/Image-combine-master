@@ -2,6 +2,7 @@
 """ขั้นตอน: ต่อภาพในแต่ละกลุ่มให้เป็นภาพเดียว"""
 
 from ..compose import stitch_group
+from ..i18n import M
 from ..pipeline import Step
 
 
@@ -15,6 +16,7 @@ class StitchStep(Step):
     """
 
     name = "stitch"
+    label_key = "step.stitch"
 
     def run(self, ctx):
         total = len(ctx.groups)
@@ -23,7 +25,8 @@ class StitchStep(Step):
             ctx.cancel.check()
             results.append(stitch_group(
                 group, vertical=ctx.vertical, bg_color=ctx.config.bg_color))
-            ctx.progress.report(i, total, f"ไฟล์ที่ {i}/{total}")
+            ctx.progress.report(i, total, M("progress.stitch_part",
+                                            index=i, total=total))
         ctx.results = results
 
         # คืนแรมของภาพต้นทาง — results เป็นผืนผ้าใบใหม่ ไม่ได้อ้างถึงภาพเดิม

@@ -53,6 +53,8 @@ dmypy.json
 
 # ---------- Packaging / installers ----------
 *.spec
+# spec ของโปรเจกต์นี้ commit ไว้ — workflow ใช้ build .exe (# ท้ายบรรทัดไม่ใช่คอมเมนต์)
+!imbine.spec
 *.manifest
 
 # ---------- IDE / editors ----------

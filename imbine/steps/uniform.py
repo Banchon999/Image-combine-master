@@ -14,6 +14,7 @@ class UniformSizeStep(Step):
     """
 
     name = "uniform"
+    label_key = "step.uniform"
 
     def is_enabled(self, ctx):
         return bool(ctx.config.uniform)

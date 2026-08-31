@@ -3,6 +3,7 @@
 
 import os
 
+from ..i18n import M
 from ..images import load_image
 from ..pipeline import Step
 
@@ -20,11 +21,12 @@ class LoadImagesStep(Step):
     """
 
     name = "load"
+    label_key = "step.load"
 
     def run(self, ctx):
         paths = list(ctx.source_paths)
         if not paths:
-            raise ValueError("ไม่มีรูปภาพให้ต่อ")
+            raise ValueError(M("core.error.no_images"))
 
         total = len(paths)
         images = []

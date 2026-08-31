@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "code": "th",
+    "name": "ไทย",
+    "english_name": "Thai"
+  },
+
+  "core.inspect.more_files": " และอีก {count} ไฟล์",
+  "core.inspect.broken": "⚠ มีไฟล์เปิดไม่ได้/เสีย {count} ไฟล์ ({names}) — ระบบจะข้ามไฟล์เหล่านี้ให้",
+  "core.inspect.width_spread": "⚠ ความกว้างของภาพต่างกันมาก ({minimum}px ถึง {maximum}px) — ระบบจะปรับให้เท่ากันก่อนต่อ แต่ควรตรวจว่าภาพถูกชุดหรือไม่",
+  "core.inspect.odd_size": "⚠ มี {count} ภาพที่ขนาดต่างจากภาพอื่นมาก ({names}) — อาจเป็นปก/โฆษณา/ภาพแทรก ควรตรวจดู",
+  "core.inspect.output_inside_input": "⚠ โฟลเดอร์ปลายทางอยู่ในโฟลเดอร์ต้นทาง ({folder}) — ไฟล์ที่ต่อแล้วอาจถูกนำมาต่อซ้ำ ในรอบถัดไป แนะนำให้แยกโฟลเดอร์ปลายทางออกมา",
+
+  "core.export.unknown_format": "ไม่ทราบความสามารถของ format {fmt}",
+  "core.export.no_alpha": "{fmt} ไม่รองรับ alpha; จะ flatten บนสีพื้นหลังที่กำหนด",
+  "core.export.no_icc": "{fmt} ไม่รองรับ ICC profile; profile จะถูกละทิ้ง",
+  "core.export.no_exif": "{fmt} ไม่รองรับ EXIF; metadata จะถูกละทิ้ง",
+  "core.export.over_limit": "⚠ {fmt} รองรับขนาดสูงสุด {limit_w} × {limit_h} px — ไฟล์ที่ {index} จะได้ {width} × {height} px ซึ่งเกินลิมิต บันทึกไม่สำเร็จแน่นอน ให้ลดขนาดต่อไฟล์ หรือเปลี่ยนไปใช้ PNG",
+
+  "core.error.no_images": "ไม่มีรูปภาพให้ต่อ",
+  "core.error.bad_orientation": "orientation ต้องเป็น {allowed} ไม่ใช่ {value}",
+  "core.error.bad_format": "fmt ต้องเป็น {allowed} ไม่ใช่ {value}",
+  "core.error.no_encoder": "ไม่มี encoder {fmt} ใน Pillow ที่กำลังใช้งาน",
+  "core.error.no_decoder": "ไม่มี decoder สำหรับ {fmt}",
+  "core.error.bad_multi_frame": "multi_frame ต้องเป็น first, all หรือ error",
+  "core.error.not_an_image": "ไฟล์ไม่ใช่ภาพที่ Pillow อ่านได้: {path}",
+  "core.error.multi_frame_rejected": "{path} มี {frames} เฟรม แต่ policy กำหนดให้รับภาพเฟรมเดียว",
+  "core.error.step_not_found": "ไม่พบขั้นตอนชื่อ {name} (มีอยู่: {existing})",
+  "core.error.cancelled": "ยกเลิกงานแล้ว",
+  "core.error.preset_not_found": "ไม่พบพรีเซ็ตชื่อ {name}",
+  "core.error.bad_preset_name": "ชื่อพรีเซ็ตต้องไม่ว่างและห้ามมีอักขระต้องห้าม",
+
+  "pipeline.name": "ต่อภาพ",
+  "step.load": "เปิดไฟล์ภาพ",
+  "step.trim": "ตัดขอบ",
+  "step.downscale": "ย่อภาพ",
+  "step.uniform": "ปรับขนาดให้เท่ากัน",
+  "step.split": "แบ่งไฟล์",
+  "step.stitch": "ต่อภาพ",
+  "step.watermark": "ใส่ลายน้ำ",
+  "step.save": "บันทึกไฟล์",
+
+  "progress.split_result": "แบ่งได้ {count} ไฟล์",
+  "progress.stitch_part": "ไฟล์ที่ {index}/{total}",
+  "progress.trimmed": "ตัดขอบแล้ว {count} ภาพ",
+  "progress.overlap_removed": "ตัดส่วนซ้ำออก {count} จุด",
+  "progress.watermarked": "ใส่ลายน้ำแล้ว {done}/{total}"
+}

@@ -8,12 +8,15 @@ watermark / auto-trim เข้าไป โค้ดจะพันกันจ
 
 สายมาตรฐานตอนนี้:
 
-    load -> uniform -> split -> stitch -> save
+    load -> trim -> downscale -> uniform -> split -> stitch -> watermark -> save
+
+โดย trim / downscale / watermark ปิดอยู่เป็นค่าเริ่มต้น (is_enabled คืน False)
+สายจึงเหลือ load -> uniform -> split -> stitch -> save เหมือนเดิมทุกประการ
+จนกว่าผู้ใช้จะเปิดใช้เอง
 
 ตำแหน่งที่ระบบในอนาคตจะเสียบเข้ามา:
 
-    load -> [denoise] -> [upscale] -> [trim] -> uniform
-         -> split -> stitch -> [watermark] -> save
+    load -> [denoise] -> [upscale] -> trim -> uniform -> split -> ...
 
 สามหลักที่ทุก Step ต้องเคารพ:
   1. รายงานความคืบหน้าผ่าน ctx.progress — UI จะได้ไม่ต้องเดา
@@ -23,6 +26,8 @@ watermark / auto-trim เข้าไป โค้ดจะพันกันจ
 
 import threading
 from dataclasses import dataclass, field
+
+from .i18n import M, has_key, translate
 
 
 # ----------------------------------------------------------------------
@@ -54,7 +59,7 @@ class CancelToken:
     def check(self):
         """โยน Cancelled ถ้าถูกสั่งยกเลิกแล้ว"""
         if self._event.is_set():
-            raise Cancelled("ยกเลิกงานแล้ว")
+            raise Cancelled(M("core.error.cancelled"))
 
     def reset(self):
         self._event.clear()
@@ -68,12 +73,13 @@ class CancelToken:
 class ProgressEvent:
     """สถานะ ณ ขณะหนึ่งของงาน — ส่งให้ UI เอาไปวาด"""
 
-    step: str            # ชื่อขั้นตอนที่กำลังทำ (แสดงให้ผู้ใช้อ่านได้)
+    step: str            # ตัวระบุขั้นตอนที่กำลังทำ (อังกฤษ ใช้ในโค้ด)
     step_index: int      # ขั้นที่เท่าไหร่ (เริ่มที่ 1)
     step_total: int      # ทั้งหมดกี่ขั้น
     done: int            # ทำไปแล้วกี่หน่วยในขั้นนี้
     total: int           # ขั้นนี้มีกี่หน่วย
-    message: str = ""    # ข้อความเสริม เช่นชื่อไฟล์ที่กำลังทำ
+    message: object = ""  # ข้อความเสริม เช่นชื่อไฟล์ที่กำลังทำ (str หรือ Message)
+    step_label: str = ""  # ชื่อขั้นตอนที่แปลแล้ว สำหรับโชว์ผู้ใช้
 
     @property
     def fraction(self):
@@ -101,11 +107,13 @@ class Progress:
     def __init__(self, callback=None):
         self._cb = callback
         self._step = ""
+        self._label = ""
         self._index = 0
         self._total = 0
 
-    def begin_step(self, name, index, total):
+    def begin_step(self, name, index, total, label=""):
         self._step, self._index, self._total = name, index, total
+        self._label = label or name
         self.report(0, 1)
 
     def report(self, done, total, message=""):
@@ -113,7 +121,7 @@ class Progress:
             return
         self._cb(ProgressEvent(
             step=self._step, step_index=self._index, step_total=self._total,
-            done=done, total=total, message=message))
+            done=done, total=total, message=message, step_label=self._label))
 
 
 # ----------------------------------------------------------------------
@@ -164,11 +172,30 @@ class Step:
     ถ้าขั้นนั้นควรทำงานเฉพาะบางเงื่อนไข ให้ override is_enabled()
     """
 
-    name = "ขั้นตอน"
+    name = "step"
+    """ตัวระบุขั้นตอน — เป็นภาษาอังกฤษเสมอ ใช้ค้นหาใน insert_before/after"""
+
+    label_key = ""
+    """คีย์คำแปลของชื่อที่ผู้ใช้เห็น — ว่างไว้แปลว่า "ใช้ name ไปเลย"
+
+    แยกจาก name เพราะ name เป็น *ตัวระบุ* ที่โค้ดใช้ค้นหา ถ้าเอาไปแปลด้วย
+    pipe.insert_before("save", ...) จะพังทันทีที่ผู้ใช้สลับภาษา
+    """
 
     def is_enabled(self, ctx):
         """คืน False เพื่อให้ pipeline ข้ามขั้นนี้ไปเลย (ไม่นับในตัวนับขั้นด้วย)"""
         return True
+
+    def label(self):
+        """
+        ชื่อขั้นตอนที่ผู้ใช้เห็น (แปลแล้ว)
+
+        ขั้นตอนที่คนอื่นเขียนเองแล้วไม่ได้ตั้ง label_key จะได้ชื่อดิบของตัวเอง
+        กลับไป ซึ่งอ่านรู้เรื่องกว่าคำว่า "ขั้นตอน" ที่แปลจากคีย์กลาง
+        """
+        if self.label_key and has_key(self.label_key):
+            return translate(self.label_key)
+        return self.name
 
     def run(self, ctx):
         raise NotImplementedError
@@ -202,7 +229,8 @@ class Pipeline:
         for i, step in enumerate(self.steps):
             if step.name == name:
                 return i
-        raise KeyError(f"ไม่พบขั้นตอนชื่อ {name!r} (มีอยู่: {self.step_names()})")
+        raise KeyError(M("core.error.step_not_found", name=repr(name),
+                         existing=self.step_names()))
 
     # -- แก้สาย -----------------------------------------------------
 
@@ -242,7 +270,7 @@ class Pipeline:
 
         for i, step in enumerate(active, start=1):
             ctx.cancel.check()
-            ctx.progress.begin_step(step.name, i, total)
+            ctx.progress.begin_step(step.name, i, total, step.label())
             step.run(ctx)
 
         ctx.cancel.check()

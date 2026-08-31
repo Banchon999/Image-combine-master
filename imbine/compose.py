@@ -3,6 +3,7 @@
 
 from PIL import Image
 
+from .i18n import M
 from .images import load_image
 
 # Pillow ย้าย constant การ resample ไปอยู่ใต้ Image.Resampling ตั้งแต่ 9.1
@@ -56,7 +57,7 @@ def stitch_group(images, vertical=True, bg_color=(255, 255, 255)):
     """
     images = list(images)
     if not images:
-        raise ValueError("ไม่มีรูปภาพให้ต่อ")
+        raise ValueError(M("core.error.no_images"))
 
     has_alpha = any("A" in im.getbands() or im.mode in ("P", "PA") and
                     "transparency" in im.info for im in images)

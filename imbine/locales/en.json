@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "code": "en",
+    "name": "English",
+    "english_name": "English"
+  },
+
+  "core.inspect.more_files": " and {count} more",
+  "core.inspect.broken": "⚠ {count} file(s) are unreadable or corrupt ({names}) — they will be skipped",
+  "core.inspect.width_spread": "⚠ Image widths vary a lot ({minimum}px to {maximum}px) — they will be resized to match, but check whether these images belong together",
+  "core.inspect.odd_size": "⚠ {count} image(s) differ greatly in size from the rest ({names}) — often a cover, an ad or an insert; worth a look",
+  "core.inspect.output_inside_input": "⚠ The output folder sits inside the source folder ({folder}) — already-stitched files may be picked up again next run. Use a separate output folder.",
+
+  "core.export.unknown_format": "Unknown capabilities for format {fmt}",
+  "core.export.no_alpha": "{fmt} does not support alpha; it will be flattened onto the configured background",
+  "core.export.no_icc": "{fmt} does not support ICC profiles; the profile will be dropped",
+  "core.export.no_exif": "{fmt} does not support EXIF; metadata will be dropped",
+  "core.export.over_limit": "⚠ {fmt} supports at most {limit_w} × {limit_h} px — part {index} would be {width} × {height} px, which exceeds the limit and will fail to save. Reduce the size per file or switch to PNG.",
+
+  "core.error.no_images": "No images to stitch",
+  "core.error.bad_orientation": "orientation must be one of {allowed}, not {value}",
+  "core.error.bad_format": "fmt must be one of {allowed}, not {value}",
+  "core.error.no_encoder": "No {fmt} encoder in the running Pillow",
+  "core.error.no_decoder": "No decoder for {fmt}",
+  "core.error.bad_multi_frame": "multi_frame must be first, all or error",
+  "core.error.not_an_image": "Not an image Pillow can read: {path}",
+  "core.error.multi_frame_rejected": "{path} has {frames} frames but the policy accepts single-frame images only",
+  "core.error.step_not_found": "No step named {name} (available: {existing})",
+  "core.error.cancelled": "Job cancelled",
+  "core.error.preset_not_found": "No preset named {name}",
+  "core.error.bad_preset_name": "A preset name must not be empty or contain forbidden characters",
+
+  "pipeline.name": "stitch",
+  "step.load": "Load images",
+  "step.trim": "Trim",
+  "step.downscale": "Downscale",
+  "step.uniform": "Match sizes",
+  "step.split": "Split",
+  "step.stitch": "Stitch",
+  "step.watermark": "Watermark",
+  "step.save": "Save",
+
+  "progress.split_result": "Split into {count} file(s)",
+  "progress.stitch_part": "Part {index}/{total}",
+  "progress.trimmed": "Trimmed {count} image(s)",
+  "progress.overlap_removed": "Removed {count} overlapping section(s)",
+  "progress.watermarked": "Watermarked {done}/{total}"
+}

@@ -2,6 +2,7 @@
 """ขั้นตอน: แบ่งภาพออกเป็นกลุ่ม (1 กลุ่ม = 1 ไฟล์ผลลัพธ์)"""
 
 from ..grouping import split_into_groups
+from ..i18n import M
 from ..pipeline import Step
 
 
@@ -14,6 +15,7 @@ class SplitStep(Step):
     """
 
     name = "split"
+    label_key = "step.split"
 
     def run(self, ctx):
         cfg = ctx.config
@@ -23,4 +25,5 @@ class SplitStep(Step):
             max_size=cfg.max_size,
             vertical=ctx.vertical,
         )
-        ctx.progress.report(1, 1, f"แบ่งได้ {len(ctx.groups)} ไฟล์")
+        ctx.progress.report(1, 1, M("progress.split_result",
+                                    count=len(ctx.groups)))

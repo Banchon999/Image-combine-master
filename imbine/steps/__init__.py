@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ขั้นตอนมาตรฐานของการต่อภาพ"""
 
+from ..i18n import translate
 from ..pipeline import Pipeline
 from .load import LoadImagesStep
 from .save import SaveStep
@@ -24,4 +25,4 @@ def build_default_pipeline(save=True):
     steps = [LoadImagesStep(), UniformSizeStep(), SplitStep(), StitchStep()]
     if save:
         steps.append(SaveStep())
-    return Pipeline(steps, name="ต่อภาพ")
+    return Pipeline(steps, name=translate("pipeline.name"))

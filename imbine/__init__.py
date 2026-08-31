@@ -18,6 +18,8 @@ from .formats import (FORMAT_REGISTRY, FormatCapabilities,
                       available_export_formats, capabilities,
                       decoder_available, encoder_available)
 from .grouping import split_into_groups
+from .i18n import (DEFAULT_LOCALE, Message, available_locales, get_locale,
+                   set_locale, t, translate)
 from .images import (IMAGE_EXTS, ImageValidationError, image_paths_in,
                      inspect_image, is_image_file, list_images_sorted,
                      load_image, natural_sort_key)
@@ -32,6 +34,9 @@ from .steps import (LoadImagesStep, SaveStep, SplitStep, StitchStep,
 
 __all__ = [
     "__version__",
+    # ภาษา
+    "Message", "translate", "t", "set_locale", "get_locale",
+    "available_locales", "DEFAULT_LOCALE",
     # ค่าตั้ง
     "StitchConfig", "FORMATS", "ORIENTATIONS", "FORMAT_REGISTRY",
     "FormatCapabilities", "capabilities", "available_export_formats",

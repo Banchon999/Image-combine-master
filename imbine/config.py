@@ -11,6 +11,7 @@
 from dataclasses import asdict, dataclass, field, fields
 
 from .formats import available_export_formats, canonical_format, encoder_available
+from .i18n import M
 
 # ชนิดไฟล์ขาออกที่รองรับ
 FORMATS = tuple("JPG" if name == "JPEG" else name for name in
@@ -61,19 +62,20 @@ class StitchConfig:
 
     def __post_init__(self):
         if self.orientation not in ORIENTATIONS:
-            raise ValueError(
-                f"orientation ต้องเป็น {ORIENTATIONS} ไม่ใช่ {self.orientation!r}")
+            raise ValueError(M("core.error.bad_orientation",
+                               allowed=ORIENTATIONS, value=repr(self.orientation)))
 
         requested_fmt = str(self.fmt).upper()
         canonical = canonical_format(requested_fmt)
         if not encoder_available(canonical):
-            raise ValueError(f"ไม่มี encoder {canonical} ใน Pillow ที่กำลังใช้งาน")
+            raise ValueError(M("core.error.no_encoder", fmt=canonical))
         self.fmt = "JPG" if requested_fmt in ("JPG", "JPEG") else canonical
         if self.fmt not in FORMATS:
-            raise ValueError(f"fmt ต้องเป็น {FORMATS} ไม่ใช่ {self.fmt!r}")
+            raise ValueError(M("core.error.bad_format",
+                               allowed=FORMATS, value=repr(self.fmt)))
 
         if self.multi_frame not in ("first", "all", "error"):
-            raise ValueError("multi_frame ต้องเป็น first, all หรือ error")
+            raise ValueError(M("core.error.bad_multi_frame"))
 
         # ค่าตัวเลขใช้วิธี "บีบให้อยู่ในช่วง" ไม่ใช่โยน error
         # เพราะมันมาจาก Spinbox ที่ผู้ใช้พิมพ์มั่วได้

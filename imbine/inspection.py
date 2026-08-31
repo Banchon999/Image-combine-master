@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 
 from PIL import Image
 
+from .i18n import M, translate
 from .naming import build_output_name, ext_for
 
 
@@ -28,7 +29,7 @@ class InspectionReport:
     """{path: (w, h)} ของรูปที่เปิดได้"""
 
     warnings: list = field(default_factory=list)
-    """ข้อความเตือนภาษาไทยที่ควรแจ้งผู้ใช้ก่อนทำงาน"""
+    """คำเตือนที่ควรแจ้งผู้ใช้ก่อนทำงาน — เป็น Message แปลตอนแสดงผล"""
 
     def __bool__(self):
         """report เป็น True เมื่อมีรูปที่ใช้งานได้อย่างน้อย 1 รูป"""
@@ -36,9 +37,15 @@ class InspectionReport:
 
 
 def _join_names(paths, limit=5):
-    """รวมชื่อไฟล์เป็นข้อความสั้น ๆ ไม่ให้ยาวจนล้นกล่องข้อความ"""
+    """
+    รวมชื่อไฟล์เป็นข้อความสั้น ๆ ไม่ให้ยาวจนล้นกล่องข้อความ
+
+    คืน str ไม่ใช่ Message เพราะผลลัพธ์ถูกใช้เป็น *พารามิเตอร์* ของ Message
+    ตัวนอกอีกที — แปลตรงนี้เลยจึงถูกต้องกว่าซ้อน Message เข้าไปอีกชั้น
+    """
     names = ", ".join(os.path.basename(p) for p in paths[:limit])
-    more = f" และอีก {len(paths) - limit} ไฟล์" if len(paths) > limit else ""
+    more = (translate("core.inspect.more_files", count=len(paths) - limit)
+            if len(paths) > limit else "")
     return names + more
 
 
@@ -66,18 +73,16 @@ def inspect_images(image_paths):
     warnings = []
 
     if broken:
-        warnings.append(
-            f"⚠ มีไฟล์เปิดไม่ได้/เสีย {len(broken)} ไฟล์ "
-            f"({_join_names([p for p, _ in broken])}) — ระบบจะข้ามไฟล์เหล่านี้ให้")
+        warnings.append(M("core.inspect.broken", count=len(broken),
+                          names=_join_names([p for p, _ in broken])))
 
     # --- ความกว้างต่างกันมาก ---
     widths = [w for (w, h) in sizes.values()]
     if widths:
         wmin, wmax = min(widths), max(widths)
         if wmax > 0 and wmin / wmax < 0.5:
-            warnings.append(
-                f"⚠ ความกว้างของภาพต่างกันมาก ({wmin}px ถึง {wmax}px) — "
-                f"ระบบจะปรับให้เท่ากันก่อนต่อ แต่ควรตรวจว่าภาพถูกชุดหรือไม่")
+            warnings.append(M("core.inspect.width_spread",
+                              minimum=wmin, maximum=wmax))
 
     # --- ภาพที่ขนาดผิดปกติเทียบกับค่ามัธยฐาน ---
     # ต้องมีอย่างน้อย 4 ภาพ ค่ามัธยฐานถึงจะมีความหมายพอจะใช้เทียบ
@@ -87,9 +92,8 @@ def inspect_images(image_paths):
         odd = [p for p, (w, h) in sizes.items()
                if median > 0 and (w * h < median * 0.15 or w * h > median * 6)]
         if odd:
-            warnings.append(
-                f"⚠ มี {len(odd)} ภาพที่ขนาดต่างจากภาพอื่นมาก "
-                f"({_join_names(odd)}) — อาจเป็นปก/โฆษณา/ภาพแทรก ควรตรวจดู")
+            warnings.append(M("core.inspect.odd_size", count=len(odd),
+                              names=_join_names(odd)))
 
     return InspectionReport(ok=ok, broken=broken, sizes=sizes,
                             warnings=warnings)
@@ -109,10 +113,8 @@ def check_output_path(folders_in, folder_out):
     for fin in folders_in:
         in_abs = os.path.abspath(fin)
         if out_abs == in_abs or out_abs.startswith(in_abs + os.sep):
-            warnings.append(
-                f"⚠ โฟลเดอร์ปลายทางอยู่ในโฟลเดอร์ต้นทาง "
-                f"({os.path.basename(fin)}) — ไฟล์ที่ต่อแล้วอาจถูกนำมาต่อซ้ำ "
-                f"ในรอบถัดไป แนะนำให้แยกโฟลเดอร์ปลายทางออกมา")
+            warnings.append(M("core.inspect.output_inside_input",
+                              folder=os.path.basename(fin)))
     return warnings
 
 
