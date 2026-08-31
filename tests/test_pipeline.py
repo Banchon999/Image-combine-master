@@ -200,7 +200,15 @@ class TestDefaultPipeline:
 
     def test_ลำดับขั้นมาตรฐาน(self):
         assert build_default_pipeline().step_names() == [
-            "load", "uniform", "split", "stitch", "save"]
+            "load", "trim", "downscale", "uniform", "split", "stitch",
+            "watermark", "save"]
+
+    def test_ขั้นที่ทำงานจริงด้วยค่าเริ่มต้นยังเป็นสายเดิม(self):
+        """ขั้นใหม่ต้องปิดอยู่เป็นค่าเริ่มต้น — คนที่ไม่ได้เปิดใช้ต้องไม่รู้สึกว่าอะไรเปลี่ยน"""
+        ctx = make_ctx(output_folder="out")   # save เปิดเมื่อมีปลายทางเท่านั้น
+        active = [s.name for s in build_default_pipeline().steps
+                  if s.is_enabled(ctx)]
+        assert active == ["load", "uniform", "split", "stitch", "save"]
 
     def test_ปิดการบันทึกได้สำหรับ_preview(self):
         assert "save" not in build_default_pipeline(save=False).step_names()
@@ -208,5 +216,6 @@ class TestDefaultPipeline:
     def test_uniform_ปิดตาม_config(self, folder_of_images):
         ctx = make_ctx()
         ctx.config = StitchConfig(uniform=False)
-        uniform = build_default_pipeline().steps[1]
+        pipe = build_default_pipeline()
+        uniform = pipe.steps[pipe.index_of("uniform")]
         assert uniform.is_enabled(ctx) is False

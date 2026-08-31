@@ -60,6 +60,32 @@ class StitchConfig:
     export_options: dict = field(default_factory=dict)
     """ตัวเลือก Pillow เพิ่มเติม แยกตาม format ได้โดยไม่แก้ pipeline"""
 
+    # ---- ตัดขอบ / ตัดส่วนซ้ำ (TrimStep) ----
+
+    trim_borders: bool = False
+    """ตัดขอบสีเดียวรอบภาพออกก่อนต่อหรือไม่"""
+
+    dedupe_overlap: bool = False
+    """ตัดส่วนที่หน้าถัดไปซ้อนทับหน้าก่อนหน้าออกหรือไม่"""
+
+    trim_tolerance: int = 8
+    """ความต่างของสีที่ยังนับว่าเหมือนกัน — JPEG มี noise เสมอ 0 = แทบไม่ตัดอะไรเลย"""
+
+    overlap_max_px: int = 400
+    """ค้นหาส่วนซ้อนได้ลึกสุดกี่พิกเซล ยิ่งมากยิ่งช้า"""
+
+    # ---- ลายน้ำ (WatermarkStep) ----
+
+    watermark: dict = field(default_factory=dict)
+    """ค่าตั้งลายน้ำ — เก็บเป็น dict ก้อนเดียวเพื่อให้เพิ่มตัวเลือกทีหลังได้
+    โดยไม่ต้องแก้คลาสนี้และไม่ทำให้ไฟล์ preset เก่าอ่านไม่ได้ ดู
+    imbine.watermark.apply_watermark ว่ารับคีย์อะไรบ้าง"""
+
+    # ---- พรีวิว (DownscaleStep) ----
+
+    preview_max_dimension: int = 0
+    """ย่อภาพให้ด้านยาวสุดไม่เกินเท่านี้ก่อนต่อ / 0 = ไม่ย่อ (โหมดส่งออกจริง)"""
+
     def __post_init__(self):
         if self.orientation not in ORIENTATIONS:
             raise ValueError(M("core.error.bad_orientation",
@@ -87,6 +113,13 @@ class StitchConfig:
         self.bg_color = tuple(self.bg_color)
         self.alpha_background = tuple(self.alpha_background)
         self.export_options = dict(self.export_options or {})
+
+        self.trim_borders = bool(self.trim_borders)
+        self.dedupe_overlap = bool(self.dedupe_overlap)
+        self.trim_tolerance = max(0, min(255, int(self.trim_tolerance)))
+        self.overlap_max_px = max(0, int(self.overlap_max_px))
+        self.watermark = dict(self.watermark or {})
+        self.preview_max_dimension = max(0, int(self.preview_max_dimension))
 
     @property
     def vertical(self):
