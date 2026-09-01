@@ -7,6 +7,7 @@ import warnings
 from PIL import Image
 
 from .formats import capabilities, canonical_format, encoder_available
+from .i18n import M
 from .naming import build_output_name, ext_for
 
 
@@ -27,13 +28,13 @@ def export_warnings(img, fmt):
     caps = capabilities(fmt)
     notices = []
     if caps is None:
-        return [f"ไม่ทราบความสามารถของ format {fmt}"]
+        return [M("core.export.unknown_format", fmt=fmt)]
     if ("A" in img.getbands() or "transparency" in img.info) and not caps.alpha:
-        notices.append(f"{fmt} ไม่รองรับ alpha; จะ flatten บนสีพื้นหลังที่กำหนด")
+        notices.append(M("core.export.no_alpha", fmt=fmt))
     if img.info.get("icc_profile") and not caps.icc_profile:
-        notices.append(f"{fmt} ไม่รองรับ ICC profile; profile จะถูกละทิ้ง")
+        notices.append(M("core.export.no_icc", fmt=fmt))
     if img.info.get("exif") and not caps.exif:
-        notices.append(f"{fmt} ไม่รองรับ EXIF; metadata จะถูกละทิ้ง")
+        notices.append(M("core.export.no_exif", fmt=fmt))
     return notices
 
 
@@ -48,9 +49,12 @@ def save_image(img, path, fmt="JPG", quality=92, alpha_background=(255, 255, 255
     """บันทึกภาพ 1 ใบตามชนิดที่เลือก แล้วคืน path ที่เขียนจริง"""
     fmt = canonical_format(fmt)
     if not encoder_available(fmt):
-        raise ValueError(f"ไม่มี encoder {fmt} ใน Pillow ที่กำลังใช้งาน")
+        raise ValueError(M("core.error.no_encoder", fmt=fmt))
+    # str() ตรงนี้ไม่ใช่ของประดับ — warnings.warn รับได้แค่ str หรือ Warning
+    # ต่อให้ Message สืบทอดจาก str อยู่แล้ว การบอกเจตนาไว้ก็กันคนแก้ทีหลัง
+    # เผลอเปลี่ยน Message ไปเป็นวัตถุแบบอื่น
     for notice in export_warnings(img, fmt):
-        (warning_cb or (lambda message: warnings.warn(message, UserWarning)))(notice)
+        (warning_cb or (lambda message: warnings.warn(str(message), UserWarning)))(notice)
     caps = capabilities(fmt)
     if caps and not caps.alpha and ("A" in img.getbands() or
                                     "transparency" in img.info):

@@ -11,6 +11,7 @@
 from dataclasses import asdict, dataclass, field, fields
 
 from .formats import available_export_formats, canonical_format, encoder_available
+from .i18n import M
 
 # ชนิดไฟล์ขาออกที่รองรับ
 FORMATS = tuple("JPG" if name == "JPEG" else name for name in
@@ -59,21 +60,51 @@ class StitchConfig:
     export_options: dict = field(default_factory=dict)
     """ตัวเลือก Pillow เพิ่มเติม แยกตาม format ได้โดยไม่แก้ pipeline"""
 
+    # ---- ตัดขอบ / ตัดส่วนซ้ำ (TrimStep) ----
+
+    trim_borders: bool = False
+    """ตัดขอบสีเดียวรอบภาพออกก่อนต่อหรือไม่"""
+
+    dedupe_overlap: bool = False
+    """ตัดส่วนที่หน้าถัดไปซ้อนทับหน้าก่อนหน้าออกหรือไม่"""
+
+    trim_tolerance: int = 8
+    """ความต่างของสีที่ยังนับว่าเหมือนกัน — JPEG มี noise เสมอ 0 = แทบไม่ตัดอะไรเลย"""
+
+    overlap_max_px: int = 400
+    """ค้นหาส่วนซ้อนได้ลึกสุดกี่พิกเซล ยิ่งมากยิ่งช้า"""
+
+    # ---- ลายน้ำ (WatermarkStep) ----
+
+    watermark: dict = field(default_factory=dict)
+    """ค่าตั้งลายน้ำ — เก็บเป็น dict ก้อนเดียวเพื่อให้เพิ่มตัวเลือกทีหลังได้
+    โดยไม่ต้องแก้คลาสนี้และไม่ทำให้ไฟล์ preset เก่าอ่านไม่ได้ ดู
+    imbine.watermark.apply_watermark ว่ารับคีย์อะไรบ้าง"""
+
+    # ---- พรีวิว (DownscaleStep) ----
+
+    preview_max_pixels: int = 0
+    """งบพิกเซลรวมของภาพผลลัพธ์ในโหมดพรีวิว / 0 = ไม่ย่อ (โหมดส่งออกจริง)
+
+    เป็น "จำนวนพิกเซล" ไม่ใช่ "ด้านยาวสุด" เพราะภาพเว็บตูนสูงเป็นหมื่นพิกเซล
+    การจำกัดด้านยาวจะย่อจนความกว้างเหลือไม่กี่สิบพิกเซลและดูอะไรไม่ออกเลย"""
+
     def __post_init__(self):
         if self.orientation not in ORIENTATIONS:
-            raise ValueError(
-                f"orientation ต้องเป็น {ORIENTATIONS} ไม่ใช่ {self.orientation!r}")
+            raise ValueError(M("core.error.bad_orientation",
+                               allowed=ORIENTATIONS, value=repr(self.orientation)))
 
         requested_fmt = str(self.fmt).upper()
         canonical = canonical_format(requested_fmt)
         if not encoder_available(canonical):
-            raise ValueError(f"ไม่มี encoder {canonical} ใน Pillow ที่กำลังใช้งาน")
+            raise ValueError(M("core.error.no_encoder", fmt=canonical))
         self.fmt = "JPG" if requested_fmt in ("JPG", "JPEG") else canonical
         if self.fmt not in FORMATS:
-            raise ValueError(f"fmt ต้องเป็น {FORMATS} ไม่ใช่ {self.fmt!r}")
+            raise ValueError(M("core.error.bad_format",
+                               allowed=FORMATS, value=repr(self.fmt)))
 
         if self.multi_frame not in ("first", "all", "error"):
-            raise ValueError("multi_frame ต้องเป็น first, all หรือ error")
+            raise ValueError(M("core.error.bad_multi_frame"))
 
         # ค่าตัวเลขใช้วิธี "บีบให้อยู่ในช่วง" ไม่ใช่โยน error
         # เพราะมันมาจาก Spinbox ที่ผู้ใช้พิมพ์มั่วได้
@@ -85,6 +116,13 @@ class StitchConfig:
         self.bg_color = tuple(self.bg_color)
         self.alpha_background = tuple(self.alpha_background)
         self.export_options = dict(self.export_options or {})
+
+        self.trim_borders = bool(self.trim_borders)
+        self.dedupe_overlap = bool(self.dedupe_overlap)
+        self.trim_tolerance = max(0, min(255, int(self.trim_tolerance)))
+        self.overlap_max_px = max(0, int(self.overlap_max_px))
+        self.watermark = dict(self.watermark or {})
+        self.preview_max_pixels = max(0, int(self.preview_max_pixels))
 
     @property
     def vertical(self):

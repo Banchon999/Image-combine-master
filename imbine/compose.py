@@ -3,6 +3,7 @@
 
 from PIL import Image
 
+from .i18n import M
 from .images import load_image
 
 # Pillow ย้าย constant การ resample ไปอยู่ใต้ Image.Resampling ตั้งแต่ 9.1
@@ -13,6 +14,44 @@ except AttributeError:  # pragma: no cover - Pillow เก่ากว่า 9.1
     RESAMPLE = Image.LANCZOS
 
 
+def uniform_target(sizes, vertical=True):
+    """
+    ขนาดของ 'ด้านตัด' ที่ทุกภาพจะถูกปรับให้เท่ากัน
+
+    ยึด "ค่ามากสุด" เพื่อไม่ให้ภาพถูกย่อจนเสียรายละเอียด — ภาพเล็กจะถูกขยายขึ้น
+    แทนที่จะย่อภาพใหญ่ลง
+    """
+    sizes = list(sizes)
+    if not sizes:
+        return 0
+    return max(w if vertical else h for (w, h) in sizes)
+
+
+def uniform_size(size, target, vertical=True):
+    """ขนาดใหม่ของภาพหนึ่งใบหลังปรับด้านตัดให้เท่ากับ target"""
+    w, h = size
+    if vertical:
+        if w == target:
+            return (w, h)
+        # max(1, ...) กันภาพที่กว้างมากแต่สูงนิดเดียวถูกย่อจนสูง 0 px
+        return (target, max(1, round(h * target / w)))
+    if h == target:
+        return (w, h)
+    return (max(1, round(w * target / h)), target)
+
+
+def uniform_sizes(sizes, vertical=True):
+    """
+    ขนาดของทุกภาพหลังผ่าน fit_uniform — คำนวณจากตัวเลขล้วน ไม่เปิดไฟล์
+
+    imbine.estimate ใช้ตัวนี้เพื่อบอกผู้ใช้ล่วงหน้าว่าจะได้ไฟล์ขนาดเท่าไหร่
+    ต้องให้ผลตรงกับ fit_uniform เสมอ — ทั้งคู่จึงใช้ uniform_size ตัวเดียวกัน
+    """
+    sizes = list(sizes)
+    target = uniform_target(sizes, vertical)
+    return [uniform_size(size, target, vertical) for size in sizes]
+
+
 def fit_uniform(images, vertical=True, resample=RESAMPLE):
     """
     ปรับ 'ด้านตัด' ของทุกภาพให้เท่ากัน โดยคงอัตราส่วนเดิม
@@ -20,29 +59,19 @@ def fit_uniform(images, vertical=True, resample=RESAMPLE):
       ต่อแนวตั้ง  -> ความกว้างต้องเท่ากัน (ยึดกว้างสุดเป็นมาตรฐาน)
       ต่อแนวนอน  -> ความสูงต้องเท่ากัน  (ยึดสูงสุดเป็นมาตรฐาน)
 
-    ยึด "ค่ามากสุด" เพื่อไม่ให้ภาพถูกย่อจนเสียรายละเอียด — ภาพเล็กจะถูกขยายขึ้น
-    แทนที่จะย่อภาพใหญ่ลง
-
     คืน list ใหม่ ภาพที่ขนาดตรงอยู่แล้วจะถูกส่งต่อเป็นตัวเดิม (ไม่คัดลอกซ้ำ)
     """
     images = list(images)
     if not images:
         return []
 
-    if vertical:
-        target = max(im.width for im in images)
-    else:
-        target = max(im.height for im in images)
+    target = uniform_target([im.size for im in images], vertical)
 
     out = []
     for im in images:
-        if vertical and im.width != target:
-            # max(1, ...) กันภาพที่กว้างมากแต่สูงนิดเดียวถูกย่อจนสูง 0 px
-            new_h = max(1, round(im.height * target / im.width))
-            im = im.resize((target, new_h), resample)
-        elif not vertical and im.height != target:
-            new_w = max(1, round(im.width * target / im.height))
-            im = im.resize((new_w, target), resample)
+        new_size = uniform_size(im.size, target, vertical)
+        if new_size != im.size:
+            im = im.resize(new_size, resample)
         out.append(im)
     return out
 
@@ -56,7 +85,7 @@ def stitch_group(images, vertical=True, bg_color=(255, 255, 255)):
     """
     images = list(images)
     if not images:
-        raise ValueError("ไม่มีรูปภาพให้ต่อ")
+        raise ValueError(M("core.error.no_images"))
 
     has_alpha = any("A" in im.getbands() or im.mode in ("P", "PA") and
                     "transparency" in im.info for im in images)

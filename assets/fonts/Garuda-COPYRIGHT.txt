@@ -1,0 +1,40 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: fonts-tlwg
+Upstream-Contact: Theppitak Karoonboonyanan <theppitak@gmail.com>
+Source: https://linux.thai.net/pub/thailinux/software/fonts-tlwg
+
+Files: *
+Copyright: 2003-2021 Theppitak Karoonboonyanan <theppitak@gmail.com>
+License: GPL-2+
+
+Files: debian/*
+Copyright: 2003 Chanop Silpa-Anan <chanop@debian.org>
+           2004 Pattara Kiatisevi <ott@linux.thai.net>
+           2005-2021 Theppitak Karoonboonyanan <thep@debian.org>
+License: GPL-2+
+
+Files: nf/Kinnari*.sfd
+Copyright: 1999 Db Type
+           2007 National Electronics and Computer Technology Center
+License: GPL-2+ with Font exception
+
+Files: nf/Garuda*.sfd
+Copyright: Originally Public Domain
+           2001-2015 Theppitak Karoonboonyanan <theppitak@gmail.com>
+License: GPL-2+ with Font exception
+
+Files: nf/Norasi*.sfd
+Copyright: 1999 The National Font Project
+           1999 Yannis Haralambous, Virach Sornlertlamvanich, Anutara Tantraporn
+           1999 URW++ Design & Development
+           2003-2004 Chanop Silpa-Anan <chanop@debian.org>
+License: GPL-2+ with Font exception
+
+Files: nectec/Loma*.sfd
+Copyright: 2003 National Electronics and Computer Technology Center
+License: GPL-2+ with Font exception
+
+Files: sipa/Laksaman*.sfd
+Copyright: 2010-2011 Software Industry Promotion Agency (Public Organization)
+                     (SIPA)
+           2014-2015 Theppitak Karoonboonyanan <theppitak@gmail.com>

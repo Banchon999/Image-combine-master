@@ -7,20 +7,30 @@ name = "imbine"
 version = "0.2.0"
 description = "แอพต่อภาพเว็บตูน - ต่อภาพแนวตั้ง/แนวนอน พร้อมระบบตรวจสอบกันพลาด"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = "GPL-3.0-or-later"
-dependencies = ["Pillow>=9.1"]
+dependencies = ["Pillow>=9.1", "PySide6>=6.5"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
 auto = ["opencv-python-headless>=4.7", "numpy>=1.21"]
+# PySide6 เป็น dependency หลักอยู่แล้ว extra นี้มีไว้ให้คำสั่งใน
+# __main__.py (pip install 'imbine[qt]') ทำงานได้จริง ไม่ใช่ no-op
 qt = ["PySide6>=6.5"]
+build = ["pyinstaller>=6"]
 
 [project.scripts]
 imbine = "imbine.__main__:main"
 
+[project.gui-scripts]
+imbine-gui = "imbine.__main__:main"
+
 [tool.setuptools.packages.find]
 include = ["imbine*"]
+
+# ไฟล์คำแปลต้องไปกับ wheel/sdist ด้วย ไม่งั้นติดตั้งแล้วแอพหาภาษาไม่เจอ
+[tool.setuptools.package-data]
+imbine = ["locales/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

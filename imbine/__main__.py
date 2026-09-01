@@ -5,20 +5,28 @@ import sys
 
 
 def main():
+    """
+    เปิดหน้าต่างโปรแกรม
+
+    ใช้ import แบบเต็ม (imbine.ui...) ไม่ใช่ import สัมพัทธ์ (.ui...) เพราะ
+    ไฟล์นี้ถูกใช้เป็น "สคริปต์ตั้งต้น" ตอนแพ็กด้วย PyInstaller ด้วย ตอนนั้น
+    มันถูกรันในฐานะ __main__ ที่ไม่มีแพ็กเกจแม่ import สัมพัทธ์จึงพังทันที
+    และ PyInstaller ก็จะตามหา PySide6 ไม่เจอ แล้วสร้างไฟล์ที่เปิดไม่ได้ออกมา
+    """
     try:
-        from .ui.tk_app import main as run_app
-    except ImportError as e:
-        # tkinter ไม่ได้มากับ Python ทุกชุด (บน Linux ต้องลงแยก) —
-        # บอกวิธีแก้ไปเลย ดีกว่าโยน traceback ดิบใส่หน้าผู้ใช้
+        from imbine.ui.qt.main_window import main as run_app
+    except ImportError as error:
+        # แยกให้ออกระหว่าง "ไม่ได้ติดตั้ง Qt" กับ "โค้ดพัง" — เดิมดักรวมกัน
+        # แล้วบอกให้ไปติดตั้ง Qt ซึ่งพาไปผิดทางเมื่อสาเหตุจริงเป็นอย่างอื่น
+        if (error.name or "").split(".")[0] != "PySide6":
+            raise
         sys.exit(
-            f"เปิดหน้าต่างโปรแกรมไม่ได้: {e}\n\n"
-            "ถ้าเป็นเพราะไม่มี tkinter ให้ติดตั้งก่อน:\n"
-            "  Debian/Ubuntu : sudo apt install python3-tk\n"
-            "  Fedora        : sudo dnf install python3-tkinter\n"
-            "  Windows/macOS : ติดตั้ง Python จาก python.org (มี tkinter มาให้)"
+            f"เปิดหน้าต่างโปรแกรมไม่ได้: {error}\n\n"
+            "ติดตั้งส่วนติดต่อผู้ใช้ด้วยคำสั่ง:\n"
+            "  pip install 'imbine[qt]'"
         )
-    run_app()
+    return run_app()
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)
